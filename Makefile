@@ -2,61 +2,61 @@ export WWWGROUP=${WWWGROUP:-$(id -g)}
 export WWWUSER=${WWWUSER:-$UID}
 BACKEND_ENV=docker run --rm -i --user $(shell id -u):$(shell id -g) -v $(shell git rev-parse --show-superproject-working-tree --show-toplevel | head -1):/var/www/html -w /var/www/html laravelsail/php82-composer:latest
 SAIL=$(shell git rev-parse --show-superproject-working-tree --show-toplevel | head -1)/vendor/bin/sail
-COMPOSER=docker run --rm -i --user `id -u`:`id -g` -v `pwd`:/app composer:2.3.10
+COMPOSER=docker run --rm -i --user `id -u`:`id -g` -v `git rev-parse --show-superproject-working-tree --show-toplevel | head -1`:/app composer:2.3.10
 
 setup-local:
-	@make backend-setup
+	@make setup
 
 setup-ci:
-	@make backend-setup
+	@make setup
 
 # swagger-ui:
 # 	(cd utils && docker compose up swagger_ui -d --no-recreate )
 # 	open http://localhost:8080/
 
-backend-setup:
+setup:
 	(cp .env.example .env)
 	(${BACKEND_ENV} composer install --ignore-platform-reqs)
 	(${BACKEND_ENV} php artisan key:generate)
-	@make backend-up
-	@make backend-generate
+	@make up
+	@make generate
 	(${SAIL} pint)
 
-backend-build:
+build:
 	(${BACKEND_ENV} composer install --ignore-platform-reqs)
 	(${SAIL} build ${BUILD_OPTIONS})
 
-backend-generate:
+generate:
 	(${BACKEND_ENV} php artisan ide-helper:generate)
-	@make backend-migrate
-	@make backend-annotation
-	@make backend-oas-generate
+	@make migrate
+	@make annotation
+	@make oas-generate
 
-backend-up:
+up:
 	(${SAIL} up -d --build && \
 	sleep 10)
 
-backend-down:
+down:
 	(${SAIL} down)
 
-backend-destroy:
+destroy:
 	(${SAIL} down -v)
 
-backend-test:
+test:
 	(${SAIL} test --coverage --coverage-clover clover.xml  )
 
-backend-lint:
+lint:
 	(${SAIL} pint)
-	@make backend-phpstan
+	@make phpstan
 
-backend-oas-generate:
+oas-generate:
 	(${SAIL} artisan openapi:generate > $(shell pwd)/documents/api/schema.json)
 
-backend-route-check:
+route-check:
 	(${SAIL} artisan route:list)
 
 all-containers-build:
-	@make backend-build
+	@make build
 #	(cd utils && docker compose build)
 
 trivy:
@@ -65,29 +65,34 @@ trivy:
 tinker:
 	(${SAIL} tinker)
 
-backend-bash:
+bash:
 	(${SAIL} bash)
 
-backend-migrate:
+migrate:
 	(${SAIL} artisan migrate)
 
-backend-annotation:
+annotation:
 	(${SAIL} artisan ide-helper:model --write)
 
-backend-phpstan:
+phpstan:
 	(${BACKEND_ENV} vendor/bin/phpstan analyse -c phpstan.neon --memory-limit=2G)
 
-backend-infra-deploy:
+infra-deploy:
 	(cd packages/infra/ec2 && cp setup_base.sh setup.sh && cat .credentials/cf_tunnel.sh >> setup.sh && terraform apply)
 
-backend-infra-plan:
+infra-plan:
 	(cd packages/infra/ec2 && cp setup_base.sh setup.sh && cat .credentials/cf_tunnel.sh >> setup.sh && terraform plan)
 
-backend-infra-plan-ci:
+infra-plan-ci:
 	(cd packages/infra/ec2 && cp setup_base.sh setup.sh && terraform plan -no-color -input=false)
 
-backend-infra-destroy:
+infra-destroy:
 	(cd packages/infra/ec2 && terraform destroy)
 
-backend-composer-update:
-	(${COMPOSER} update)
+# make require package=<package name>で利用可能
+require:
+	@if [ -z "$(package)" ]; then \
+		echo "package variable is not set"; \
+		exit 1; \
+	fi
+	$(COMPOSER) require $(package)
