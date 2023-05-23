@@ -30,7 +30,8 @@ generate:
 	(${BACKEND_ENV} php artisan ide-helper:generate)
 	@make migrate
 	@make annotation
-	@make oas-generate
+    # TODO: OpenAPI スキーマ
+	# @make oas-generate
 
 up:
 	(${SAIL} up -d --build && \
@@ -57,7 +58,6 @@ route-check:
 
 all-containers-build:
 	@make build
-#	(cd utils && docker compose build)
 
 trivy:
 	trivy image $(shell docker images --format "{{.Repository}}:{{.Tag}}" | grep -v "<none>:<none>")
@@ -76,18 +76,6 @@ annotation:
 
 phpstan:
 	(${BACKEND_ENV} vendor/bin/phpstan analyse -c phpstan.neon --memory-limit=2G)
-
-infra-deploy:
-	(cd packages/infra/ec2 && cp setup_base.sh setup.sh && cat .credentials/cf_tunnel.sh >> setup.sh && terraform apply)
-
-infra-plan:
-	(cd packages/infra/ec2 && cp setup_base.sh setup.sh && cat .credentials/cf_tunnel.sh >> setup.sh && terraform plan)
-
-infra-plan-ci:
-	(cd packages/infra/ec2 && cp setup_base.sh setup.sh && terraform plan -no-color -input=false)
-
-infra-destroy:
-	(cd packages/infra/ec2 && terraform destroy)
 
 # make require package=<package name>で利用可能
 require:
