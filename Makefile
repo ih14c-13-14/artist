@@ -19,6 +19,7 @@ setup:
 	(${BACKEND_ENV} composer install --ignore-platform-reqs)
 	(${BACKEND_ENV} php artisan key:generate)
 	@make up
+	sleep 10
 	@make generate
 	(${SAIL} pint)
 
@@ -34,8 +35,7 @@ generate:
 	# @make oas-generate
 
 up:
-	(${SAIL} up -d --build && \
-	sleep 10)
+	(${SAIL} up -d --build)
 
 down:
 	(${SAIL} down)
