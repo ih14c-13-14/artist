@@ -1,0 +1,70 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    branches:
+      - main
+
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Generate github token
+        id: generate_token
+        uses: tibdex/github-app-token@v1.8.0
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.PRIVATE_KEY }}
+      # TODO: Enable cache
+      # - uses: satackey/action-docker-layer-caching@v0.0.11
+      #   continue-on-error: true
+      # with:
+      #   key: foo-docker-cache-{hash}
+      #   restore-keys: |
+      #     foo-docker-cache-
+      - name: Setup CI
+        run: make setup
+      - name: Test
+        run: make test
+      # - name: Delete Duplicate Comment with Coverage Summary
+      #   if: github.event_name == 'pull_request'
+      #   uses: kamatama41/hide-pr-comments-action@v0
+      #   with:
+      #     github-token: ${{ steps.generate_token.outputs.token }}
+      #     author: 2na2
+      #     message_regex: "Coverage after merging"
+      # - name: Shaping
+      #   if: github.event_name == 'pull_request'
+      #   run: sed -i -e 's/\/var\/www\/html/packages\/backend/g' ./packages/backend/clover.xml
+      # - name: Coverage Summary
+      #   if: github.event_name == 'pull_request'
+      #   uses: danhunsaker/clover-reporter-action@v0.2.17-clover
+      #   with:
+      #     github-token: ${{ steps.generate_token.outputs.token }}
+      #     clover-file: ./packages/backend/clover.xml
+  Lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      # TODO: Enable cache
+      # - uses: satackey/action-docker-layer-caching@v0.0.11
+      #   continue-on-error: true
+      # with:
+      #   key: foo-docker-cache-{hash}
+      #   restore-keys: |
+      #     foo-docker-cache-
+      - name: Setup CI
+        run: make setup
+      - name: Lint
+        run: make lint
