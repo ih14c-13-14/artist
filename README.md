@@ -5,6 +5,18 @@
 
 以上です。
 
+# 起動方法
+
+-   `make up`
+
+# 終了方法
+
+-   `make down`
+
+コンテナごと破棄する場合は
+
+-   `make destroy`
+
 # 手元でのテスト方法
 
 ## Unit test
