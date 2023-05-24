@@ -169,7 +169,7 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         // TODO: 動作確認
-        Illuminate\Redis\RedisServiceProvider::class,
+        // Illuminate\Redis\RedisServiceProvider::class,
     ])->toArray(),
 
     /*
