@@ -1,0 +1,22 @@
+name: 'Auto Assign For Any P.R.'
+on:
+  pull_request:
+    types:
+      - opened
+      - ready_for_review
+
+jobs:
+  add-reviews:
+    if: github.event.pull_request.draft == false && toJSON(github.event.pull_request.requested_reviewers) == '[]'
+    runs-on:
+      - ubuntu-latest
+    steps:
+      - name: Generate github token
+        id: generate_token
+        uses: tibdex/github-app-token@v1.8.0 # リリース時にコミットハッシュで固定
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.PRIVATE_KEY }}
+      - uses: kentaro-m/auto-assign-action@v1.2.5
+        with:
+          repo-token: ${{ steps.generate_token.outputs.token }}
